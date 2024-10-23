@@ -144,26 +144,66 @@ button.btn.btn-primary.mt-3 {
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-8">
-                <h5><a href="index.jsp">← Continuar comprando</a></h5>
+                <h5><a href="AfterLogin.jsp">← Continuar comprando</a></h5>
                 <h6 class="mb-3">Carrito de compras</h6>
-                <p>Tienes 1 producto en tu carrito</p>
+
+                <%
+                    Integer userId = (Integer) session.getAttribute("user_id");
+                    double subtotal = 0;
+                    double envio = 20.00;
+                    double total = 0;
+
+                    if (userId != null) {
+                        CarritoDAO carritoDAO = new CarritoDAO();
+                        List<Carrito> carritos = carritoDAO.getCarritosByUserId(userId);
+
+                        if (carritos != null && !carritos.isEmpty()) {
+                            for (Carrito carrito : carritos) {
+                                subtotal += carrito.getPrecio() * carrito.getCantidad();
+                            }
+                            total = subtotal + envio; // Calculo total
+                            session.setAttribute("montoTotal", total); // Almacena el total en la sesión
+%>
+
+                <p>Tienes <%= carritos.size()%> productos en tu carrito</p>
                 <div class="cart-items">
-                    <!-- Ejemplo de artículo en el carrito -->
-                    <div class="cart-item">
-                        <img src="../img/Box 13.jpg" alt="Producto" class="img-fluid">
-                        <div class="item-details">
-                            <h6>Box Girasoles</h6>
-                            <p>12 Girasoles</p>
+                    <%
+                        for (Carrito carrito : carritos) {
+                    %>
+                    <div class="cart-item d-flex align-items-center mb-3">
+                        <div class="item-image">
+                            <img src="../img/<%= carrito.getFlorId()%>.jpg" alt="Flor" class="img-fluid" style="width: 100px;">
                         </div>
-                        <div class="item-quantity">
-                            <input type="number" value="2" class="form-control">
+                        <div class="item-details ms-3">
+                            <h6 class="mb-1">Flor ID: <%= carrito.getFlorId()%></h6> <!-- Se muestra el ID de la flor en lugar del nombre -->
+                            <p class="text-muted"><%= carrito.getCantidad()%> unidades</p>
                         </div>
-                        <div class="item-price">
-                            <p>S/135</p>
+                        <div class="item-quantity ms-3">
+                            <form action="ActualizarCarrito" method="post">
+                                <input type="hidden" name="idCarrito" value="<%= carrito.getIdCarrito()%>">
+                                <input type="number" name="cantidad" value="<%= carrito.getCantidad()%>" class="form-control" style="width: 70px;">
+                                <button type="submit" class="btn btn-sm btn-primary mt-1">Actualizar</button>
+                            </form>
+                        </div>
+                        <div class="item-price ms-auto">
+                            <p class="mb-0">S/<%= String.format("%.2f", carrito.getPrecio() * carrito.getCantidad())%></p>
                         </div>
                     </div>
-                    <!-- Más artículos se pueden agregar aquí -->
+                    <%
+                        }
+                    } else {
+                    %>
+                    <p>No tienes productos en tu carrito.</p>
+                    <%
+                        }
+                    %>
                 </div>
+
+                <%
+                    } else {
+                        response.sendRedirect("login.jsp");
+                    }
+                %>
             </div>
             <div class="col-md-4">
                 <div class="card details-card">
